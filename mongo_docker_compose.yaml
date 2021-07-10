@@ -1,0 +1,54 @@
+version: '3.1'
+
+networks:
+    mongo-compose-network:
+        driver: bridge
+
+services:
+
+    mongo:
+        image: mongo:latest
+        restart: always
+        ports:
+            - 27017:27017
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+            MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+        networks: 
+            - mongo-compose-network
+        volumes: 
+            - db-data:/data/db
+
+    mongo-express:
+        image: mongo-express:latest
+        restart: always
+        ports:
+            - 8081:8081
+        environment:
+            ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER}
+            ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD}
+            ME_CONFIG_MONGODB_SERVER: mongo
+        networks: 
+            - mongo-compose-network
+        depends_on: 
+            - mongo
+    
+    rstudio-image:
+        image: rstudio-mongo:latest
+        restart: on-failure
+        ports: 
+            - 8787:8787
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+            MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+        networks:
+            - mongo-compose-network
+        depends_on: 
+            - mongo
+        volumes:
+            - db-data:/home/rstudio/data
+            - ~/RProjects/mongodb_docker:/home/rstudio
+
+volumes:
+    db-data:
+        driver: local
